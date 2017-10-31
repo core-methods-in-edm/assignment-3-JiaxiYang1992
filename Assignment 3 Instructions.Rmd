@@ -21,7 +21,7 @@ library(ggplot2)
 Now, upload the file "Class_Motivation.csv" from the Assignment 3 Repository as a data frame called "K1""
 ```{r}
 
-K1 <- read.table(...)
+K1 <- read.table(file="Class_Motivation.csv",header=TRUE,sep=",")
 
 ```
 
@@ -104,7 +104,7 @@ K5 <- tidyr::gather(K4, "week", "motivation", 1:5)
 Now lets use dplyr to average our motivation values by week and by cluster.
 
 ```{r}
-
+library(dplyr)
 K6 <- K5 %>% group_by(week, cluster)
 K6 <- summarise(K6, avg = mean(motivation))
 
@@ -138,8 +138,8 @@ Now we can plot our line plot using the ggplot command, "ggplot()".
 - Finally we are going to clean up our axes labels: xlab("Week") & ylab("Average Motivation")
 
 ```{r}
-
-ggplot(K6, aes(week, avg, colour = cluster)) + geom_line() + xlab("Week") + ylab("Average Motivation")
+library(ggplot2)
+ggplot(K6, aes(week, avg, colour = cluster))+geom_point() + geom_line() + xlab("Week") + ylab("Average Motivation")
 
 ```
 
@@ -153,16 +153,149 @@ K7 <- dplyr::count(K4, cluster)
 
 Look at the number of people in each cluster, now repeat this process for 3 rather than 2 clusters. Which cluster grouping do you think is more informative? Write your answer below:
 
+```{r}
+fit_3cluster<-kmeans(K3, 3)
+
+fit_3cluster$cluster
+
+C_31<-data.frame(K3, fit_3cluster$cluster)
+
+names(C_31)<-c("1","2","3","4","5","cluster")
+
+C_32<-tidyr::gather (C_31, "week", "motivation", 1:5)
+
+C_33<-C_32 %>% group_by(week, cluster)
+
+C_33<-summarise(C_33, avg=mean(motivation))
+
+C_33$week<-as.numeric(C_33$week)
+
+C_33$cluster<-as.factor(C_33$cluster)
+
+ggplot(C_33, aes(week, avg, colour = cluster))+geom_point() + geom_line() + xlab("Week") + ylab("Average Motivation")
+
+C_34<-dplyr::count(C_31, cluster)
+
+# Personally, I think the three clusters looks better than 2 clusters. Because the plot with three clusters shows 3 different patterns for students. None of these patterns show similar trend to each other. Therefore, I think this plot contains more information than the 2-cluster plot.
+
+```
+
 
 Once you have done this, save both of your plots to the Assignment 5 file. Create a Zotero item to index your new computer program (Assignment 5.rmd) in Zotero. Then commit your assignment, push it to your Github account and then Pull request your version to the original assignment version so I can see it.
+
+I have created a link to this rmd file in Zotero along with the reading papers.
 
 ##Part II
 
 Now, try to do the same for the data [collected in class](https://tccolumbia.qualtrics.com/SE/?SID=SV_6RRqlSAM6lZWYQt). Create two groups of clusters, the answers to the questions and regions where people grew up. 
 
+```{r}
+# Read the data and follow the steps in Part I
+
+C1<-read.csv(file="cluster-class-data.csv",header=TRUE)
+C2<-dplyr::select(C1, 4:13)
+
+# We need to recode the dataset and change string variable to numeric variable (0,1)
+
+C2$QID3<-ifelse(C2$QID3== "Yes", "1","0") 
+C2$QID4<-ifelse(C2$QID4== "g-iff", "1","0") 
+C2$QID3<-as.numeric(C2$QID3)
+C2$QID4<-as.numeric(C2$QID4)
+
+# Scale
+
+C3<-na.omit(C2)
+C3<-scale(C3)
+
+# Divide the data into 2 clusters
+
+fit_2<-kmeans(C3, 2)
+fit_2$cluster
+C4<-data.frame(C3, fit_2$cluster)
+
+# Rename
+
+names(C4)<-c("1","2","3","4","5","6","7","8","9","10", "cluster")
+
+# Convert
+
+C5<-tidyr::gather(C4, "Questions","Answers",1:10)
+
+# Average
+
+C6<-C5%>%group_by(Questions, cluster)
+C6<-summarise(C6, avg=mean(Answers))
+
+# Convert format
+
+C6$Questions<-as.numeric(C6$Questions)
+C6$cluster<-as.factor(C6$cluster)
+
+# Plotting
+
+ggplot(C6, aes(Questions, avg, colour=cluster))+geom_point()+geom_line()+xlab("Questions")+ylab("Average Answer")
+
+# Group students by regions. Here we will use the "ggmap" package.
+
+D1<-dplyr::select(C1,14:16)
+names(D1)<-c("city","province","country")
+
+install.packages("ggmap")
+library("ggmap")
+
+# Get the location information of the cities
+
+D2<- geocode(as.character(D1$city),output="latlon")
+D2_2<-
+
+# Redo the cluster procedure
+
+fit_3<-kmeans(D2,2)
+
+D3<-data.frame(D2,fit_3$cluster)
+
+# Here we use the geo cluster for students' answer 
+
+D4<-data.frame(C3, D3$cluster)
+
+names(D4)<-c("1","2","3","4","5","6","7","8","9","10", "cluster")
+
+# Convert
+
+D5<-tidyr::gather(D4, "Questions","Answers",1:10)
+
+# Average
+
+D6<-D5%>%group_by(Questions, cluster)
+D6<-summarise(D6, avg=mean(Answers))
+
+# Convert format
+
+D6$Questions<-as.numeric(D6$Questions)
+D6$cluster<-as.factor(D6$cluster)
+
+# Plotting
+
+ggplot(D6, aes(Questions, avg, colour=cluster))+geom_point()+geom_line()+xlab("Questions")+ylab("Average Answer")
+
+
+```
+
+
+
+
 ##Part III
 
 Create a visualization that shows the overlap between the two groups of clusters you created in part III.
+
+```{r}
+
+ggplot(C6, aes(Questions, avg, colour=cluster))+geom_point()+geom_line()+xlab("Questions")+ylab("Average Answer")
+ggplot(D6, aes(Questions, avg, colour=cluster))+geom_point()+geom_line()+xlab("Questions")+ylab("Average Answer")
+
+
+```
+
 
 Code Book:
 
