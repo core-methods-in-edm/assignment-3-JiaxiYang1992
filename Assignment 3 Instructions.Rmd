@@ -206,6 +206,7 @@ C2$QID4<-as.numeric(C2$QID4)
 
 C3<-na.omit(C2)
 C3<-scale(C3)
+C3<-as.data.frame(C3)
 
 # Divide the data into 2 clusters
 
@@ -246,8 +247,7 @@ library("ggmap")
 # Get the location information of the cities
 
 D2<- geocode(as.character(D1$city),output="latlon")
-D22<-geocode(as.character(D1$city[c(5,6)]),output="latlon")
-D2[c(5,6),]<-D22
+
 # Redo the cluster procedure
 
 fit_3<-kmeans(D2,2)
@@ -256,7 +256,8 @@ D3<-data.frame(D2,fit_3$cluster)
 
 # Here we use the geo cluster for students' answer 
 
-D4<-data.frame(C3, D3$cluster)
+C3$cluster<-D3$fit_3.cluster
+D4<-C3
 
 names(D4)<-c("1","2","3","4","5","6","7","8","9","10", "cluster")
 
@@ -297,7 +298,7 @@ ggplot(D6, aes(Questions, avg, colour=cluster))+geom_point()+geom_line()+xlab("Q
 
 vis <- cbind(D2, fit_3$cluster)
 names(vis) <- c("lon", "lat", "cluster") 
-vis$cluster <- as.facotr(vis$cluster)
+vis$cluster <- as.factor(vis$cluster)
 
 # Visualization 
 
